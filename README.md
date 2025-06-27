@@ -42,7 +42,7 @@ opsmaster argocd project create meu-projeto ...
 
 3. Executar o Deploy com OpsMaster:
 
-    - Use o comando app create para implantar a aplicação, especificando a tag da imagem que você acabou de publicar:
+   - Use o comando app create para implantar a aplicação, especificando a tag da imagem que você acabou de publicar:
 
 ```bash
 opsmaster argocd app create \
