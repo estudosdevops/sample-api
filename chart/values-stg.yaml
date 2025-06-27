@@ -1,7 +1,6 @@
-generic-app:
-  nameOverride: "sample-api"
-  pods:
-    image:
-      name: "placeholder"
-      tag: "placeholder"
-      pullPolicy: IfNotPresent
+nameOverride: "sample-api"
+pods:
+  image:
+    name: "placeholder"
+    tag: "placeholder"
+    pullPolicy: IfNotPresent
