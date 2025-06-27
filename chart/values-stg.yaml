@@ -1,25 +1,6 @@
-# Os valores aqui sobrescrevem os padrões do chart "generic-app".
-
-# Define o nome da imagem a ser usada.
-# O chart espera as chaves 'repository' e 'tag'.
-image:
-  repository: fcruzcoelho/estudosdevops
-  # Este valor será IGNORADO e SUBSTITUÍDO pelo que você passar na flag --set-image-tag.
-  tag: "placeholder"
-  pullPolicy: Always
-
-# Outras configurações que o chart 'generic-app' entende.
-replicaCount: 1
-
-service:
-  port: 80
-  targetPort: 8080
-
-# Exemplo de como passar variáveis de ambiente.
-# O chart 'generic-app' provavelmente já tem uma lógica para usar
-# o valor de .Values.image.tag para definir a versão,
-# então você talvez nem precise disto.
-# Verifique a documentação do chart.
-# env:
-#   - name: APP_VERSION
-#     value: "{{ .Values.image.tag }}" # Esta sintaxe só funciona nos templates do chart, não aqui.
+pods:
+  image:
+    name: fcruzcoelho/estudosdevops
+    # Este valor será IGNORADO e SUBSTITUÍDO pelo que você passar na flag --set-image-tag.
+    tag: "placeholder"
+    pullPolicy: IfNotPresent
