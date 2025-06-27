@@ -1,6 +1,7 @@
-pods:
-  image:
-    name: fcruzcoelho/estudosdevops
-    # Este valor será IGNORADO e SUBSTITUÍDO pelo que você passar na flag --set-image-tag.
-    tag: "placeholder"
-    pullPolicy: IfNotPresent
+generic-app:
+  pods:
+    image:
+      name: fcruzcoelho/estudosdevops
+      # Este valor será IGNORADO e SUBSTITUÍDO pelo que você passar na flag --set-image-tag.
+      tag: "placeholder"
+      pullPolicy: IfNotPresent
