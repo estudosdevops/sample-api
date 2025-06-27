@@ -1,9 +1,9 @@
-FROM golang:1.21-alpine AS builder
+FROM golang:1.22-alpine AS builder
 
 WORKDIR /app
 
 # Copia os arquivos de gerenciamento de dependências.
-COPY go.mod go.sum ./
+COPY go.mod go.sum* ./
 
 # Baixa as dependências.
 RUN go mod download
