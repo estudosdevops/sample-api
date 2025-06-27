@@ -1,4 +1,5 @@
 generic-app:
+  nameOverride: "sample-api"
   pods:
     image:
       name: fcruzcoelho/estudosdevops
