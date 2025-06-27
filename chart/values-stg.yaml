@@ -5,9 +5,4 @@ generic-app:
   pods:
     image:
       name: fcruzcoelho/sample-api
-      tag: "{{ .Values.image.tag }}"
       pullPolicy: Always
-
-    env:
-      - name: APP_VERSION
-        value: "{{ .Values.image.tag }}"
