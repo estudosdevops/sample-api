@@ -1,48 +1,11 @@
 ---
-replicaCount: 2
+nameOverride: sample-api
 
-image:
-  repository: meu-servico-exemplo # O nome da imagem a ser usada
-  # A tag será sobrescrita pela flag --set-image-tag do opsmaster
+pods:
+  image:
+    name: fcruzcoelho/sample-api
+    pullPolicy: Always
 
-service:
-  port: 80
-  targetPort: 8080 # A porta que nossa aplicação Go expõe no container
-
-ingress:
-  enabled: false
-  hosts:
-    - host: meu-servico.stg.sua-empresa.com
-      paths:
-        - path: /
-          pathType: ImplementationSpecific
-
-# Configuração de recursos de CPU e Memória
-resources:
-  limits:
-    cpu: 200m
-    memory: 128Mi
-  requests:
-    cpu: 100m
-    memory: 64Mi
-
-# Configuração de probes para health checks
-livenessProbe:
-  httpGet:
-    path: /
-    port: http # O chart generic-app nomeia a porta do container como 'http'
-  initialDelaySeconds: 15
-  periodSeconds: 20
-
-readinessProbe:
-  httpGet:
-    path: /
-    port: http
-  initialDelaySeconds: 5
-  periodSeconds: 10
-
-# Passa a tag da imagem como uma variável de ambiente para a aplicação.
-# O chart generic-app espera uma lista de mapas para env.
-env:
-  - name: APP_VERSION
-    value: "{{ .Values.image.tag }}"
+  env:
+    - name: APP_VERSION
+      value: "{{ .Values.image.tag }}"
