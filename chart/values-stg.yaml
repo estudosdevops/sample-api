@@ -1,11 +1,12 @@
 ---
-nameOverride: sample-api
+generic-app:
+  nameOverride: sample-api
 
-pods:
-  image:
-    name: fcruzcoelho/sample-api
-    pullPolicy: Always
+  pods:
+    image:
+      name: fcruzcoelho/sample-api
+      pullPolicy: Always
 
-  env:
-    - name: APP_VERSION
-      value: "{{ .Values.image.tag }}"
+    env:
+      - name: APP_VERSION
+        value: "{{ .Values.image.tag }}"
