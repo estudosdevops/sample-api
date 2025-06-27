@@ -2,7 +2,6 @@ generic-app:
   nameOverride: "sample-api"
   pods:
     image:
-      name: fcruzcoelho/estudosdevops
-      # Este valor será IGNORADO e SUBSTITUÍDO pelo que você passar na flag --set-image-tag.
+      name: "placeholder"
       tag: "placeholder"
       pullPolicy: IfNotPresent
