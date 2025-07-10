@@ -5,11 +5,14 @@ base-app:
       name: "placeholder"
       tag: "placeholder"
       pullPolicy: IfNotPresent
+  
+    affinity:
+      rules: {}
 
   service:
     enabled: true
     ports:
     - port: 80
-      targetPort: 8080
+      targetPort: 80
       protocol: TCP
       name: http
