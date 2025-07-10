@@ -1,4 +1,4 @@
-generic-app:
+base-app:
   nameOverride: "sample-api"
   pods:
     image:

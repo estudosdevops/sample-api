@@ -5,6 +5,6 @@ type: application
 version: 0.1.0
 
 dependencies:
-  - name: generic-app
-    version: "0.0.17"
-    repository: "https://charts.visonneau.fr"
+  - name: base-app
+    version: 1.*.*
+    repository: oci://ghcr.io/estudosdevops/helm-chart
