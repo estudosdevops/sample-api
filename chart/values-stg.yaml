@@ -6,9 +6,6 @@ base-app:
       tag: "placeholder"
       pullPolicy: IfNotPresent
   
-    affinity:
-      rules: {}
-
   service:
     enabled: true
     ports:
