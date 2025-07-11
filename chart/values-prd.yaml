@@ -17,8 +17,3 @@ base-app:
 
   rollout:
     enabled: true
-    strategy:
-      canary:
-        steps:
-        - setWeight: 20
-        - pause: {}
