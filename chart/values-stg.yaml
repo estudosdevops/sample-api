@@ -13,3 +13,10 @@ base-app:
       targetPort: 80
       protocol: TCP
       name: http
+  
+  externalSecrets:
+    enabled: true
+    secretStore:
+      kind: "ClusterSecretStore"
+    dataFrom:
+      - key: "secret/stg/sample-api"

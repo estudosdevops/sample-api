@@ -16,11 +16,18 @@ func main() {
 			appVersion = "desconhecida"
 		}
 
+		// Pega a dummy secret através do external-secrets
+		dummySecret := os.Getenv("DUMMY_SECRET")
+		if dummySecret == "" {
+			dummySecret = "secret não encontrada"
+		}
+
 		// Cria a estrutura da resposta.
 		response := map[string]string{
-			"serviço":  "sample-api",
-			"mensagem": "Olá, OpsMaster!",
-			"versão":   appVersion,
+			"serviço":      "sample-api",
+			"mensagem":     "Olá, OpsMaster!",
+			"versão":       appVersion,
+			"dummy_secret": dummySecret,
 		}
 
 		// Define o cabeçalho como JSON.
