@@ -20,4 +20,4 @@ base-app:
       name: vault-global
       kind: "ClusterSecretStore"
     dataFrom:
-      - key: "secret/stg/sample-api"
+      - key: "stg/sample-api"
