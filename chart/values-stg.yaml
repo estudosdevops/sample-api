@@ -5,6 +5,12 @@ base-app:
       name: "placeholder"
       tag: "placeholder"
       pullPolicy: IfNotPresent
+    
+    envFrom:
+    # - configMapRef:
+    #     name: config
+    - secretRef:
+        name: sample-api
   
   service:
     enabled: true
