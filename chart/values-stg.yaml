@@ -16,7 +16,7 @@ base-app:
   
   externalSecrets:
     enabled: true
-    secretStoreRef:
+    secretStore:
       name: vault-global
       kind: "ClusterSecretStore"
     dataFrom:
