@@ -16,7 +16,8 @@ base-app:
   
   externalSecrets:
     enabled: true
-    secretStore:
+    secretStoreRef:
+      name: vault-global
       kind: "ClusterSecretStore"
     dataFrom:
       - key: "secret/stg/sample-api"
