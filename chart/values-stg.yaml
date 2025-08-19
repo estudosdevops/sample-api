@@ -23,7 +23,7 @@ base-app:
   externalSecrets:
     enabled: true
     secretStore:
-      name: vault-stg-store
+      name: vault-backend-stg
       kind: "ClusterSecretStore"
     dataFrom:
       - key: "sample-api"
