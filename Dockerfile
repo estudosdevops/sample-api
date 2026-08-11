@@ -6,7 +6,7 @@ WORKDIR /app
 COPY go.mod go.sum* ./
 
 # Baixa as dependências.
-RUN go mod download
+RUN apk add --no-cache ca-certificates && go mod download
 
 # Copia o código-fonte.
 COPY . .
@@ -20,6 +20,7 @@ FROM scratch
 
 # Copia apenas o executável compilado do estágio de build.
 COPY --from=builder /app/api /sample-api
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 
 # Expõe a porta que nosso servidor usa.
 EXPOSE 8080
