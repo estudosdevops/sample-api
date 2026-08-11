@@ -18,7 +18,7 @@ base-app:
       - name: REDIS_ADDR
         value: 192.168.10.143:6379
       - name: OTEL_EXPORTER_OTLP_ENDPOINT
-        value: "0.0.0.0:4317"
+        value: "http://grafana-alloy.grafana-alloy.svc.cluster.local:4317"
       - name: POSTGRES_DSN
         value: postgres://postgres:postgres@192.168.10.143:5432/sampledb?sslmode=disable
 

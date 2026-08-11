@@ -16,7 +16,7 @@ spec:
     helm:
       releaseName: sample-api
       valueFiles:
-        - values-stg.yaml
+        - values-prod.yaml
       ignoreMissingValueFiles: true
   destination:
     server: https://kubernetes.default.svc
