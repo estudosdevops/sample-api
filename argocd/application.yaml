@@ -6,9 +6,9 @@ metadata:
   labels:
     app.kubernetes.io/name: sample-api
     app.kubernetes.io/managed-by: argocd
-    app.kubernetes.io/part-of: application
+    app.kubernetes.io/part-of: applications
 spec:
-  project: default
+  project: apps
   source:
     repoURL: https://github.com/estudosdevops/sample-api.git
     targetRevision: main
