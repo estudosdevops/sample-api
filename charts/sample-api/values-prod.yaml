@@ -20,7 +20,7 @@ base-app:
       - name: OTEL_EXPORTER_OTLP_ENDPOINT
         value: "http://grafana-alloy.grafana-alloy.svc.cluster.local:4317"
       - name: POSTGRES_DSN
-        value: postgres://postgres:postgres@192.168.20.22:5432/sampledb?sslmode=disable
+        value: postgresql://sample-api:sample%40api@192.168.20.22:5432/sample-api?sslmode=disable
 
   service:
     enabled: true
