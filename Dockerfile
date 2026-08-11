@@ -1,4 +1,4 @@
-FROM golang:1.22-alpine AS builder
+FROM golang:1.26-alpine AS builder
 
 WORKDIR /app
 
@@ -12,14 +12,14 @@ RUN go mod download
 COPY . .
 
 # Compila a aplicação, criando um executável estático.
-RUN CGO_ENABLED=0 GOOS=linux go build -o /sample-api .
+RUN CGO_ENABLED=0 GOOS=linux go build -o /app/api ./cmd/api
 
 # --- Estágio 2: Final ---
 # Usa uma imagem "scratch", que é uma imagem vazia, para máxima segurança e tamanho mínimo.
 FROM scratch
 
 # Copia apenas o executável compilado do estágio de build.
-COPY --from=builder /sample-api /sample-api
+COPY --from=builder /app/api /sample-api
 
 # Expõe a porta que nosso servidor usa.
 EXPOSE 8080

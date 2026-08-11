@@ -1,0 +1,64 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: sampledb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  #  app:
+  #    build:
+  #      context: .
+  #      dockerfile: Dockerfile
+  #    restart: unless-stopped
+  #    ports:
+  #      - "8080:8080"
+  #    env_file:
+  #      - .env
+  #    depends_on:
+  #      postgres:
+  #        condition: service_healthy
+  #      redis:
+  #        condition: service_healthy
+
+  alloy:
+    image: grafana/alloy:latest
+    restart: unless-stopped
+    ports:
+      - "12345:12345" # UI do Alloy
+      - "4317:4317" # OTLP gRPC (recebe traces/métricas da app)
+      - "4318:4318" # OTLP HTTP
+    volumes:
+      - ./alloy/config.alloy:/etc/alloy/config.alloy
+    command:
+      - "run"
+      - "--server.http.listen-addr=0.0.0.0:12345"
+      - "--storage.path=/var/lib/alloy/data"
+      - "/etc/alloy/config.alloy"
+
+volumes:
+  postgres-data:
+    driver: local

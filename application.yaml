@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: sample-api-stg
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: sample-api
+    app.kubernetes.io/managed-by: argocd
+    app.kubernetes.io/part-of: application
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/estudosdevops/sample-api.git
+    targetRevision: main
+    path: charts/sample-api
+    helm:
+      releaseName: sample-api
+      valueFiles:
+        - values-stg.yaml
+      ignoreMissingValueFiles: true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: sample-api
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ApplyOutOfSyncOnly=true

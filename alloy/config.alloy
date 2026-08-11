@@ -1,0 +1,55 @@
+// ==========================================
+// 1. Recebedor OTLP (Recebe Traces e Métricas da App Go)
+// ==========================================
+otelcol.receiver.otlp "default" {
+  grpc {
+    endpoint = "0.0.0.0:4317"
+  }
+  http {
+    endpoint = "0.0.0.0:4318"
+  }
+
+  output {
+    metrics = [otelcol.processor.batch.metrics.input]
+    traces  = [otelcol.processor.batch.traces.input]
+  }
+}
+
+// ==========================================
+// 2. Processadores de Lote (Batch)
+// ==========================================
+otelcol.processor.batch "metrics" {
+  output {
+    metrics = [otelcol.exporter.otlp.prometheus.input]
+  }
+}
+
+otelcol.processor.batch "traces" {
+  output {
+    traces = [otelcol.exporter.otlp.tempo.input]
+  }
+}
+
+// ==========================================
+// 3. Pipeline de Traces (Para o Grafana Tempo na VM)
+// ==========================================
+otelcol.exporter.otlp "tempo" {
+  client {
+    endpoint = "192.168.20.21:4317"
+    tls {
+      insecure = true
+    }
+  }
+}
+
+// ==========================================
+// 4. Pipeline de Métricas (Para o Prometheus/Mimir na VM)
+// ==========================================
+otelcol.exporter.otlp "prometheus" {
+  client {
+    endpoint = "192.168.20.21:4317"
+    tls {
+      insecure = true
+    }
+  }
+}
