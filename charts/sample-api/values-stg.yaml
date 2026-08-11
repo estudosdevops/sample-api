@@ -2,8 +2,8 @@ sample-api:
   nameOverride: sample-api
   pods:
     image:
-      name: fcruzcoelho/sample-api
-      tag: 1.0.0
+      name: "fcruzcoelho/sample-api"
+      tag: "1.0.0"
       pullPolicy: Always
 
     env:
