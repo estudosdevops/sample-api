@@ -14,7 +14,7 @@ base-app:
       - name: SERVICE_NAME
         value: sample-api
       - name: SERVICE_VERSION
-        value: 0.1.0
+        value: 1.0.0
       - name: REDIS_ADDR
         value: 192.168.20.22:6379
       - name: OTEL_EXPORTER_OTLP_ENDPOINT
@@ -29,6 +29,24 @@ base-app:
         targetPort: 80
         protocol: TCP
         name: http
+
+  livenessProbe:
+    httpGet:
+      path: /healthz
+      port: 8080
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 2
+    failureThreshold: 3
+
+  readinessProbe:
+    httpGet:
+      path: /readyz
+      port: 8080
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    timeoutSeconds: 2
+    failureThreshold: 2
 
   rollout:
     enabled: true

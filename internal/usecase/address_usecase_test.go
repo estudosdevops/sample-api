@@ -37,11 +37,17 @@ func TestGetByCEP_Validation(t *testing.T) {
 func TestGetByCEP_Found(t *testing.T) {
 	repo := &stubRepo{data: map[string]*domain.Address{"01001000": {CEP: "01001000", Street: "Praça da Sé", City: "São Paulo", State: "SP"}}}
 	uc := NewAddressUseCase(repo, nil, nil)
-	a, err := uc.GetByCEP(context.Background(), "01001000")
+	a, err := uc.GetByCEP(context.Background(), "01001-000")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if a.CEP != "01001000" {
 		t.Fatalf("unexpected cep: %s", a.CEP)
+	}
+}
+
+func TestSanitizeCEP(t *testing.T) {
+	if got := sanitizeCEP(" 077.434-05 "); got != "07743405" {
+		t.Fatalf("unexpected sanitized CEP: %s", got)
 	}
 }

@@ -3,53 +3,34 @@ package usecase
 import (
 	"context"
 	"errors"
-	"sync"
+	"strings"
+	"unicode"
 
 	"github.com/estudosdevops/sample-api/internal/clients/viacep"
 	"github.com/estudosdevops/sample-api/internal/domain"
 	"github.com/estudosdevops/sample-api/internal/infra"
 	"github.com/estudosdevops/sample-api/internal/repository"
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/attribute"
-	metric "go.opentelemetry.io/otel/metric"
 )
 
 // AddressUseCase implements business logic for addresses.
 type AddressUseCase struct {
-	repo   repository.AddressRepository
-	cache  repository.CacheRepository
-	viacep viacep.Client
-}
-
-var (
-	metricsOnce     sync.Once
-	cacheHitCounter interface {
-		Add(context.Context, int64, ...metric.AddOption)
-	}
-	cacheMissCounter interface {
-		Add(context.Context, int64, ...metric.AddOption)
-	}
-)
-
-func initMetrics() {
-	metricsOnce.Do(func() {
-		meter := otel.GetMeterProvider().Meter("sample-api")
-		// metric names follow prometheus conventions: <namespace>_<subsystem>_<name>_total
-		if c, err := meter.Int64Counter("sample_api_redis_cache_hits_total"); err == nil {
-			cacheHitCounter = c
-		}
-		if c, err := meter.Int64Counter("sample_api_redis_cache_misses_total"); err == nil {
-			cacheMissCounter = c
-		}
-	})
+	repo    repository.AddressRepository
+	cache   repository.CacheRepository
+	viacep  viacep.Client
+	metrics *infra.BusinessMetrics
 }
 
 func NewAddressUseCase(r repository.AddressRepository, c repository.CacheRepository, v viacep.Client) *AddressUseCase {
-	initMetrics()
-	return &AddressUseCase{repo: r, cache: c, viacep: v}
+	return &AddressUseCase{
+		repo:    r,
+		cache:   c,
+		viacep:  v,
+		metrics: infra.InitBusinessMetrics(),
+	}
 }
 
 func (uc *AddressUseCase) GetByCEP(ctx context.Context, cep string) (*domain.Address, error) {
+	cep = sanitizeCEP(cep)
 	if cep == "" {
 		return nil, domain.ErrValidation
 	}
@@ -57,19 +38,17 @@ func (uc *AddressUseCase) GetByCEP(ctx context.Context, cep string) (*domain.Add
 	// check cache first
 	if uc.cache != nil {
 		if a, err := uc.cache.GetAddress(ctx, cep); err == nil {
-			if cacheHitCounter != nil {
-				cacheHitCounter.Add(ctx, 1, metric.WithAttributes(attribute.String("service.version", infra.ServiceVersion), attribute.String("environment", infra.Environment)))
-			}
+			uc.metrics.RecordCacheRequest(ctx, true) // hit
+			uc.metrics.RecordUFLookup(ctx, a.State, "redis")
 			return a, nil
 		}
-		if cacheMissCounter != nil {
-			cacheMissCounter.Add(ctx, 1, metric.WithAttributes(attribute.String("service.version", infra.ServiceVersion), attribute.String("environment", infra.Environment)))
-		}
+		uc.metrics.RecordCacheRequest(ctx, false) // miss
 	}
 
 	// fallback to repository (DB)
 	addr, err := uc.repo.GetByCEP(ctx, cep)
 	if err == nil {
+		uc.metrics.RecordUFLookup(ctx, addr.State, "postgres")
 		// populate cache
 		if uc.cache != nil {
 			_ = uc.cache.SetAddress(ctx, addr)
@@ -89,7 +68,7 @@ func (uc *AddressUseCase) GetByCEP(ctx context.Context, cep string) (*domain.Add
 		return nil, err
 	}
 	newAddr := &domain.Address{
-		CEP:    resp.CEP,
+		CEP:    sanitizeCEP(resp.CEP),
 		Street: resp.Street,
 		City:   resp.City,
 		State:  resp.State,
@@ -107,5 +86,15 @@ func (uc *AddressUseCase) GetByCEP(ctx context.Context, cep string) (*domain.Add
 		}
 	}
 
+	uc.metrics.RecordUFLookup(ctx, newAddr.State, "viacep")
 	return newAddr, nil
+}
+
+func sanitizeCEP(cep string) string {
+	return strings.Map(func(r rune) rune {
+		if unicode.IsDigit(r) {
+			return r
+		}
+		return -1
+	}, cep)
 }

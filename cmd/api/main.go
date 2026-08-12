@@ -54,20 +54,12 @@ func main() {
 		defer rr.Close()
 	}
 
-	// ping services and log connectivity
+	// ping services with bounded retries and structured startup logs
 	if pg != nil {
-		if err := pg.Ping(ctx); err != nil {
-			infra.LoggerFromContext(ctx).Warn("postgres ping failed", "error", err)
-		} else {
-			infra.LoggerFromContext(ctx).Info("postgres connected")
-		}
+		infra.PingWithRetry(ctx, "postgres", cfg.PostgresDSN, pg.Ping)
 	}
 	if rr != nil {
-		if err := rr.Ping(ctx); err != nil {
-			infra.LoggerFromContext(ctx).Warn("redis ping failed", "error", err)
-		} else {
-			infra.LoggerFromContext(ctx).Info("redis connected")
-		}
+		infra.PingWithRetry(ctx, "redis", cfg.RedisAddr, rr.Ping)
 	}
 
 	// choose address repository: prefer Postgres, fallback to memory
@@ -88,15 +80,13 @@ func main() {
 	via := viacep.NewHTTPClient("https://viacep.com.br/ws")
 
 	addrUC := usecase.NewAddressUseCase(addrRepo, cacheRepo, via)
-	h := deliveryhttp.NewHandler(addrUC)
+	h := deliveryhttp.NewHandler(addrUC, pg, rr)
 
 	// gin router
 	r := gin.New()
 	r.Use(gin.Recovery())
 	// request middleware adds request_id and server spans
 	r.Use(infra.RequestMiddleware(cfg.ServiceName, cfg.ServiceVersion, cfg.Env))
-	// expose prometheus metrics using infra's metrics handler
-	r.GET("/metrics", gin.WrapH(infra.MetricsHandler()))
 	h.RegisterRoutes(r)
 
 	srv := &http.Server{

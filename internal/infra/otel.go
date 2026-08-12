@@ -4,21 +4,18 @@ package infra
 
 import (
 	"context"
-	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"log/slog"
 
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
-	promexp "go.opentelemetry.io/otel/exporters/prometheus"
 	"go.opentelemetry.io/otel/propagation"
-	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
+	"go.opentelemetry.io/otel/sdk/metric"
 	sdkresource "go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 )
@@ -29,12 +26,18 @@ func InitOpenTelemetry(ctx context.Context) (func(context.Context) error, error)
 		endpoint = "alloy:4317"
 	}
 
-	traceExporter, err := otlptracegrpc.New(ctx,
+	// use a short timeout for exporter initialization to avoid blocking startup
+	initCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	traceExporter, err := otlptracegrpc.New(initCtx,
 		otlptracegrpc.WithEndpoint(endpoint),
 		otlptracegrpc.WithInsecure(),
 	)
 	if err != nil {
-		return nil, err
+		slog.Warn("trace exporter init failed (using no-op)", "error", err)
+		// use no-op exporter to avoid panics, startup continues
+		traceExporter = nil
 	}
 
 	res, err := sdkresource.New(ctx,
@@ -46,37 +49,53 @@ func InitOpenTelemetry(ctx context.Context) (func(context.Context) error, error)
 		return nil, err
 	}
 
-	bsp := sdktrace.NewBatchSpanProcessor(traceExporter)
-	tp := sdktrace.NewTracerProvider(
-		sdktrace.WithSpanProcessor(bsp),
-		sdktrace.WithResource(res),
-	)
+	var tp *sdktrace.TracerProvider
+	if traceExporter != nil {
+		bsp := sdktrace.NewBatchSpanProcessor(traceExporter)
+		tp = sdktrace.NewTracerProvider(
+			sdktrace.WithSpanProcessor(bsp),
+			sdktrace.WithResource(res),
+		)
+	} else {
+		// no-op tracer provider if exporter failed
+		tp = sdktrace.NewTracerProvider(sdktrace.WithResource(res))
+	}
 	otel.SetTracerProvider(tp)
 	otel.SetTextMapPropagator(propagation.TraceContext{})
 
-	shutdown := func(ctx context.Context) error {
-		return tp.Shutdown(ctx)
+	// metric exporter via OTLP gRPC to Alloy
+	metricExporter, err := otlpmetricgrpc.New(initCtx,
+		otlpmetricgrpc.WithEndpoint(endpoint),
+		otlpmetricgrpc.WithInsecure(),
+	)
+	if err != nil {
+		slog.Warn("metric exporter init failed (using no-op)", "error", err)
+		metricExporter = nil
 	}
 
-	reg := prometheus.NewRegistry()
-	promExp, err := promexp.New(promexp.WithRegisterer(reg))
-	if err == nil {
-		mp := sdkmetric.NewMeterProvider(sdkmetric.WithReader(promExp))
-		otel.SetMeterProvider(mp)
-		promRegistry = reg
+	// meter provider with periodic reader
+	var mp *metric.MeterProvider
+	if metricExporter != nil {
+		reader := metric.NewPeriodicReader(metricExporter)
+		mp = metric.NewMeterProvider(
+			metric.WithReader(reader),
+			metric.WithResource(res),
+		)
 	} else {
-		slog.Warn("prometheus exporter init failed", "error", err)
+		// no-op meter provider if exporter failed
+		mp = metric.NewMeterProvider(metric.WithResource(res))
+	}
+	otel.SetMeterProvider(mp)
+
+	shutdown := func(ctx context.Context) error {
+		if err := tp.Shutdown(ctx); err != nil {
+			slog.Warn("tracer provider shutdown failed", "error", err)
+		}
+		if err := mp.Shutdown(ctx); err != nil {
+			slog.Warn("meter provider shutdown failed", "error", err)
+		}
+		return nil
 	}
 
 	return shutdown, nil
-}
-
-var promRegistry *prometheus.Registry
-
-// MetricsHandler returns an http.Handler serving Prometheus metrics for the exporter registry.
-func MetricsHandler() http.Handler {
-	if promRegistry == nil {
-		return promhttp.Handler()
-	}
-	return promhttp.HandlerFor(promRegistry, promhttp.HandlerOpts{})
 }
