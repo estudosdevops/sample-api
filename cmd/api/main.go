@@ -83,6 +83,9 @@ func main() {
 	h := deliveryhttp.NewHandler(addrUC, pg, rr)
 
 	// gin router
+	if os.Getenv("GIN_MODE") == gin.ReleaseMode || cfg.Env == "production" {
+		gin.SetMode(gin.ReleaseMode)
+	}
 	r := gin.New()
 	r.Use(gin.Recovery())
 	// request middleware adds request_id and server spans
